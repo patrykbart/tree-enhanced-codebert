@@ -1,0 +1,39 @@
+[project]
+name = "tree-enhanced-codebert"
+version = "1.0.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Patryk Bartkowiak", email = "patrykbart99@gmail.com"},
+]
+dependencies = [
+    "gdown==5.2.0",
+    "ipykernel==6.29.5",
+    "datasets==3.2.0",
+    "ipywidgets==8.1.5",
+    "transformers==4.48.1",
+    "docopt==0.6.2",
+    "dpu-utils==0.6.1",
+    "tree-sitter==0.23.1",
+    "tree-sitter-python==0.23.4",
+    "tree-sitter-java==0.23.5",
+    "tree-sitter-php==0.23.11",
+    "tree-sitter-ruby==0.23.1",
+    "tree-sitter-javascript==0.23.1",
+    "tree-sitter-go==0.23.4"
+]
+requires-python = "==3.11.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+[[tool.pdm.source]]
+url = "https://download.pytorch.org/whl/cu124"
+verify_ssl = true
+include_packages = ["torch", "torchvision", "torchaudio"]
+name = "cuda"
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.scripts]
+parse_data = {cmd = "src/parse_dataset.py"}
+train = {cmd = "src/train.py"}
