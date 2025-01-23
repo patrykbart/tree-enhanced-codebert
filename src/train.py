@@ -11,6 +11,8 @@ from pathlib import Path
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoConfig, AutoModelForMaskedLM, TrainingArguments, Trainer, DataCollatorForLanguageModeling
 
+from tree_enhanced_codeberta import TreeEnhancedCodeBERTa
+
 logging.basicConfig(
     level=logging.INFO, 
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -22,14 +24,15 @@ class MonitoringTrainer(Trainer):
     def training_step(self, model, inputs, num_items_in_batch=None):
         outputs = super().training_step(model, inputs, num_items_in_batch)
 
-        for name, param in model.named_parameters():
-            if param.grad is not None:
-                grad_norm = param.grad.norm(2).item()
-                wandb.log({f'grad_norm/{name}': grad_norm})
+        if self.state.global_step % self.args.logging_steps == 0:
+            for name, param in model.named_parameters():
+                if param.grad is not None:
+                    grad_norm = param.grad.norm(2).item()
+                    wandb.log({f'grad_norm/{name}': grad_norm})
 
-        for name, param in model.named_parameters():
-            weight_norm = param.data.norm(2).item()
-            wandb.log({f'weight_norm/{name}': weight_norm})
+            for name, param in model.named_parameters():
+                weight_norm = param.data.norm(2).item()
+                wandb.log({f'weight_norm/{name}': weight_norm})
 
         return outputs
 
@@ -79,7 +82,10 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
     model_config = AutoConfig.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
-    model = AutoModelForMaskedLM.from_config(model_config)
+    if config['model']['extra_embeddings']:
+        model = TreeEnhancedCodeBERTa(model_config, config)
+    else:
+        model = AutoModelForMaskedLM.from_config(model_config)
     logger.info(f'Loaded model: {model.__class__.__name__}')
 
     training_args = TrainingArguments(

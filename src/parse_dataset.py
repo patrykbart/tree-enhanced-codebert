@@ -136,9 +136,6 @@ def main():
     dataset_name = 'code-search-net/code_search_net'
     logging.info(f"Using dataset {dataset_name}")
 
-    model_name = 'huggingface/CodeBERTa-small-v1'
-    logging.info(f"Using model {model_name}")
-
     num_proc = min(multiprocessing.cpu_count() - 1, 16)
     logger.info(f"Using {num_proc} processes") 
 
@@ -149,14 +146,13 @@ def main():
         dataset[split] = dataset[split].filter(lambda x: x['language'] != 'php', num_proc=num_proc, desc=f"Filtering PHP for {split}")
 
     tokenizer = AutoTokenizer.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
-    model_config = AutoConfig.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
     logger.info(f"Loaded dataset: {dataset}")
 
     processed_dataset = dataset.map(
         process_batch,
         fn_kwargs={
             'tokenizer': tokenizer,
-            'max_length': model_config.max_position_embeddings
+            'max_length': 512
         },
         batched=True,
         num_proc=num_proc,
