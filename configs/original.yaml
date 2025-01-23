@@ -1,0 +1,29 @@
+experiment:
+  cache_dir: "./cache/"
+  use_wandb: true
+  wandb_project: "CodeBERTa-small-v1"
+
+training:
+  seed: 123123
+  batch_size: 32
+  epochs: 3
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  warmup_steps: 1000
+  fp16: true
+
+evaluation:
+  eval_every: 5000
+  logging_steps: 100
+
+data:
+  source: "patrykbart/code_search_net_tree_enhanced"
+  mlm_probability: 0.15
+
+model:
+  extra_embeddings: false # if false, use the original CodeBERTa-small-v1
+  sinusoidal_init: false
+  concat_embeddings: false
+  sum_embeddings: false
+  max_depth: 32
