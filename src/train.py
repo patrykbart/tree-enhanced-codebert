@@ -34,6 +34,13 @@ class MonitoringTrainer(Trainer):
                 weight_norm = param.data.norm(2).item()
                 wandb.log({f'weight_norm/{name}': weight_norm})
 
+            if model.weighted_sum:
+                wandb.log({f'word_weight': model.roberta.embeddings.word_weight.item()})
+                wandb.log({f'token_type_weight': model.roberta.embeddings.token_type_weight.item()})
+                wandb.log({f'position_weight': model.roberta.embeddings.position_weight.item()})
+                wandb.log({f'depth_weight': model.roberta.embeddings.depth_weight.item()})
+                wandb.log({f'sibling_index_weight': model.roberta.embeddings.sibling_index_weight.item()})
+
         return outputs
 
 def set_seed(seed: int):
@@ -65,7 +72,7 @@ def main():
 
     if config['experiment']['use_wandb']:
         os.environ['WANDB_MODE'] = 'online'
-        initialize_wandb(config, config_path.stem, [__file__, args.config, current_dir / 'tree_starencoder.py'])
+        initialize_wandb(config, config_path.stem, [__file__, args.config, current_dir / 'tree_enhanced_embeddings.py'])
     else:
         os.environ['WANDB_MODE'] = 'offline'
         logger.info('Wandb is not used.')
@@ -107,7 +114,7 @@ def main():
         run_name=config_path.stem,
         seed=config['training']['seed'],
         fp16=config['training']['fp16'],
-        dataloader_num_workers=8,
+        dataloader_num_workers=config['training']['num_workers'],
         gradient_checkpointing=True,
         metric_for_best_model='eval_loss',
         greater_is_better=False,

@@ -186,6 +186,11 @@ class TreeEnhancedRoberta(RobertaModel):
 class TreeEnhancedCodeBERTa(RobertaForMaskedLM):
     def __init__(self, config, yaml_config):
         super().__init__(config)
+        if yaml_config['model']['weighted_sum']:
+            self.weighted_sum = True
+        else:
+            self.weighted_sum = False
+        
         self.roberta = TreeEnhancedRoberta(config, yaml_config)
         self.post_init()
 

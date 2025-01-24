@@ -26,6 +26,7 @@ model:
   extra_embeddings: true
   max_depth: 512
   max_sibling_index: 512
-  sum_embeddings: true
+  sum_embeddings: false
   weighted_sum: false
-  concat_embeddings: false
+  concat_embeddings: true
+  deeper_fusion_layer: true
