@@ -139,7 +139,7 @@ def main():
     num_proc = min(multiprocessing.cpu_count() - 1, 16)
     logger.info(f"Using {num_proc} processes") 
 
-    dataset = load_dataset('code-search-net/code_search_net', cache_dir='./cache/', num_proc=16, trust_remote_code=True)
+    dataset = load_dataset('code-search-net/code_search_net', cache_dir='./cache/', num_proc=num_proc, trust_remote_code=True)
 
     # Filter PHP because its bugged right now (AttributeError: module 'tree_sitter_php' has no attribute 'language')
     for split in dataset.keys():

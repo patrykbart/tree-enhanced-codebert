@@ -24,6 +24,7 @@ dependencies = [
     "torch==2.5.1",
     "huggingface-hub==0.26.0",
     "pyyaml==6.0.2",
+    "scikit-learn==1.6.1",
 ]
 requires-python = "==3.11.*"
 readme = "README.md"
@@ -45,3 +46,5 @@ distribution = false
 [tool.pdm.scripts]
 parse_data = {cmd = "src/parse_dataset.py"}
 train = {cmd = "src/train.py"}
+eval_pretrained = {cmd = "src/eval_pretrained.py"}
+finetune = {cmd = "src/finetune_clone_detection.py"}

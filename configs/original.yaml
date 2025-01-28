@@ -24,3 +24,13 @@ data:
 
 model:
   extra_embeddings: false
+
+finetune_clone_detection:
+  data_source: "patrykbart/1-fold-clone-detection-600k-5fold-tree-enhanced"
+  model_path: "./outputs/original/final-model/"
+  epochs: 1
+  learning_rate: 0.00001
+  warmup_steps: 0
+  eval_every: 100
+  logging_steps: 10
+  max_steps: 10000

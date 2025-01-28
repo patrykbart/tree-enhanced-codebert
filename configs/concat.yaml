@@ -29,4 +29,3 @@ model:
   sum_embeddings: false
   weighted_sum: false
   concat_embeddings: true
-  deeper_fusion_layer: false

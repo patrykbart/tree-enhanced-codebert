@@ -34,21 +34,13 @@ class TreeEnhancedRobertaEmbeddings(nn.Module):
         self.depth_embeddings = nn.Embedding(yaml_config['model']['max_depth'], config.hidden_size)
         self.sibling_index_embeddings = nn.Embedding(yaml_config['model']['max_sibling_index'], config.hidden_size)
 
-        if self.yaml_config['model']['concat_embeddings'] and self.yaml_config['model']['deeper_fusion_layer']:
+        if self.yaml_config['model']['concat_embeddings']:
             self.fusion_layer = nn.Sequential(
-                nn.Linear(config.hidden_size * 5,config.hidden_size * 5),
+                nn.Linear(config.hidden_size * 5, config.hidden_size * 5),
                 nn.GELU(),
-                nn.Linear(config.hidden_size * 5, config.hidden_size * 3),
-                nn.GELU(),
-                nn.Linear(config.hidden_size * 3, config.hidden_size)
-            )
-        elif self.yaml_config['model']['concat_embeddings'] and not self.yaml_config['model']['deeper_fusion_layer']:
-            self.fusion_layer = nn.Sequential(
                 nn.Linear(config.hidden_size * 5, config.hidden_size),
-                nn.GELU(),
-                nn.Linear(config.hidden_size, config.hidden_size)
             )
-        if self.yaml_config['model']['sum_embeddings'] and self.yaml_config['model']['weighted_sum']:
+        elif self.yaml_config['model']['sum_embeddings'] and self.yaml_config['model']['weighted_sum']:
             self.word_weight = nn.Parameter(torch.tensor(1.0))
             self.token_type_weight = nn.Parameter(torch.tensor(1.0))
             self.position_weight = nn.Parameter(torch.tensor(1.0))

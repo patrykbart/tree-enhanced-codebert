@@ -172,6 +172,7 @@ cython_debug/
 
 # Custom
 cache/
-outputs/
+outputs*/
 pdm.lock
 wandb/
+notebooks/

@@ -79,7 +79,7 @@ def main():
 
     set_seed(config['training']['seed'])
 
-    dataset = load_dataset(config['data']['source'], cache_dir=cache_dir, num_proc=8)
+    dataset = load_dataset(config['data']['source'], cache_dir=cache_dir, num_proc=config['training']['num_workers'])
     columns_to_remove = [col for col in dataset['train'].column_names if col not in ['input_ids', 'attention_mask']]
     if config['model']['extra_embeddings']:
         columns_to_remove = [col for col in columns_to_remove if col not in ['depths', 'sibling_indices', 'tree_attention_mask']]
