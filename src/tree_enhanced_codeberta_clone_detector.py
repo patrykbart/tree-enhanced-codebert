@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
-from tree_enhanced_codeberta import TreeEnhancedRoberta
+from torch.nn import CrossEntropyLoss
+from tree_enhanced_codeberta_mlm import TreeEnhancedRoberta
 from transformers import AutoModelForMaskedLM
 from transformers.modeling_outputs import SequenceClassifierOutput
 from typing import Optional, Union, Tuple

@@ -1,7 +1,6 @@
-import logging
 import multiprocessing
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoConfig
+from transformers import AutoTokenizer
 from tree_sitter import Language, Parser
 import tree_sitter_python as tspython
 import tree_sitter_java as tsjava
@@ -10,12 +9,7 @@ import tree_sitter_go as tsgo
 import tree_sitter_ruby as tsruby
 import tree_sitter_php as tsphp
 
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
+from utils import setup_logger
 
 def enhance_code(code: str, parser: Parser) -> list:
     code_tokens = []
@@ -133,8 +127,10 @@ def process_batch(batch, tokenizer, max_length):
     }
 
 def main():
+    logger = setup_logger()
+
     dataset_name = 'code-search-net/code_search_net'
-    logging.info(f"Using dataset {dataset_name}")
+    logger.info(f"Using dataset {dataset_name}")
 
     num_proc = min(multiprocessing.cpu_count() - 1, 16)
     logger.info(f"Using {num_proc} processes") 
@@ -163,12 +159,12 @@ def main():
     # Delete all other columns
     processed_dataset = processed_dataset.remove_columns(dataset['train'].column_names)
 
-    logging.info(f"Processed dataset: {processed_dataset}")
+    logger.info(f"Processed dataset: {processed_dataset}")
     
-    logging.info(f"Pushing dataset to hub")
+    logger.info(f"Pushing dataset to hub")
     processed_dataset.push_to_hub('patrykbart/code_search_net_tree_enhanced')
 
-    logging.info(f"Dataset pushed to hub")
+    logger.info(f"Dataset pushed to hub")
 
 if __name__ == '__main__':
     main()

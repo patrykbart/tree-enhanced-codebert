@@ -1,39 +1,19 @@
 import wandb
 
 import os
-import yaml
 import argparse
-import logging
-import random
-import torch
-import numpy as np
 from pathlib import Path
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoConfig, AutoModelForMaskedLM, TrainingArguments, Trainer, DataCollatorForLanguageModeling
 
-from tree_enhanced_codeberta import TreeEnhancedCodeBERTa
-
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
+from tree_enhanced_codeberta_mlm import TreeEnhancedRobertaForMaskedLM
+from utils import set_seed, setup_logger, load_config, initialize_wandb
 
 class MonitoringTrainer(Trainer):
     def training_step(self, model, inputs, num_items_in_batch=None):
         outputs = super().training_step(model, inputs, num_items_in_batch)
 
         if self.state.global_step % self.args.logging_steps == 0:
-            for name, param in model.named_parameters():
-                if param.grad is not None:
-                    grad_norm = param.grad.norm(2).item()
-                    wandb.log({f'grad_norm/{name}': grad_norm})
-
-            for name, param in model.named_parameters():
-                weight_norm = param.data.norm(2).item()
-                wandb.log({f'weight_norm/{name}': weight_norm})
-
             if model.weighted_sum:
                 wandb.log({f'word_weight': model.roberta.embeddings.word_weight.item()})
                 wandb.log({f'token_type_weight': model.roberta.embeddings.token_type_weight.item()})
@@ -43,23 +23,9 @@ class MonitoringTrainer(Trainer):
 
         return outputs
 
-def set_seed(seed: int):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-def load_config(config_path: Path) -> dict:
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
-    
-def initialize_wandb(config, name, files_to_save):
-    wandb.init(project=config['experiment']['wandb_project'], config=config, name=name)
-    for file in files_to_save:
-        wandb.save(file)
-
 def main():
+    logger = setup_logger()
+
     parser = argparse.ArgumentParser(description='Training script for TreeStarEncoder')
     parser.add_argument('--config', type=str, required=True, help='Path to the configuration file')
     args = parser.parse_args()
@@ -90,7 +56,7 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
     model_config = AutoConfig.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
     if config['model']['extra_embeddings']:
-        model = TreeEnhancedCodeBERTa(model_config, config)
+        model = TreeEnhancedRobertaForMaskedLM(model_config, config)
     else:
         model = AutoModelForMaskedLM.from_config(model_config)
     logger.info(f'Loaded model: {model.__class__.__name__}')
@@ -121,7 +87,8 @@ def main():
         save_total_limit=3,
     )
 
-    trainer = MonitoringTrainer(
+    trainer_class = MonitoringTrainer if hasattr(model, 'weighted_sum') else Trainer
+    trainer = trainer_class(
         model=model,
         args=training_args,
         train_dataset=dataset['train'],

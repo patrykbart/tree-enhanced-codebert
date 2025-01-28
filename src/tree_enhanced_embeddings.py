@@ -36,9 +36,9 @@ class TreeEnhancedRobertaEmbeddings(nn.Module):
 
         if self.yaml_config['model']['concat_embeddings']:
             self.fusion_layer = nn.Sequential(
-                nn.Linear(config.hidden_size * 5, config.hidden_size * 5),
-                nn.GELU(),
                 nn.Linear(config.hidden_size * 5, config.hidden_size),
+                nn.GELU(),
+                nn.Linear(config.hidden_size, config.hidden_size),
             )
         elif self.yaml_config['model']['sum_embeddings'] and self.yaml_config['model']['weighted_sum']:
             self.word_weight = nn.Parameter(torch.tensor(1.0))

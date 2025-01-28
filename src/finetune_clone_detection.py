@@ -1,56 +1,18 @@
 import wandb
 
 import os
-import yaml
 import argparse
-import logging
-import random
-import torch
-import numpy as np
 from pathlib import Path
 from datasets import load_dataset, DatasetDict
-from transformers import AutoTokenizer, AutoConfig, AutoModelForMaskedLM, TrainingArguments, Trainer, EarlyStoppingCallback
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from transformers import AutoTokenizer, AutoConfig, AutoModelForMaskedLM, TrainingArguments, Trainer
 
-from tree_enhanced_codeberta import TreeEnhancedCodeBERTa
+from tree_enhanced_codeberta_mlm import TreeEnhancedRobertaForMaskedLM
 from tree_enhanced_codeberta_clone_detector import TreeEnhancedCodeBERTaCloneDetection
-
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
-
-def set_seed(seed: int):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-def load_config(config_path: Path) -> dict:
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
-    
-def initialize_wandb(config, name, files_to_save):
-    wandb.init(project=config['experiment']['wandb_project'] + '-finetune-clone-detection', config=config, name=name)
-    for file in files_to_save:
-        wandb.save(file)
-
-def compute_metrics(eval_pred):
-    logits, labels = eval_pred
-    predictions = np.argmax(logits, axis=-1)
-    accuracy = accuracy_score(labels, predictions)
-    precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average='macro')
-    return {
-        'accuracy': accuracy,
-        'precision': precision,
-        'recall': recall,
-        'f1': f1
-    }
+from utils import set_seed, setup_logger, load_config, initialize_wandb, compute_metrics
 
 def main():
+    logger = setup_logger()
+
     parser = argparse.ArgumentParser(description='Training script for TreeStarEncoder')
     parser.add_argument('--config', type=str, required=True, help='Path to the configuration file')
     args = parser.parse_args()
@@ -97,7 +59,7 @@ def main():
     model_config = AutoConfig.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
     prev_model_path = config['finetune_clone_detection']['model_path']
     if config['model']['extra_embeddings']:
-        prev_model = TreeEnhancedCodeBERTa.from_pretrained(prev_model_path, config=model_config, yaml_config=config)
+        prev_model = TreeEnhancedRobertaForMaskedLM.from_pretrained(prev_model_path, config=model_config, yaml_config=config)
     else:
         prev_model = AutoModelForMaskedLM.from_pretrained(prev_model_path)
     logger.info(f'Loaded previous model: {prev_model.__class__.__name__}')

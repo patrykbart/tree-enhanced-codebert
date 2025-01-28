@@ -46,5 +46,5 @@ distribution = false
 [tool.pdm.scripts]
 parse_data = {cmd = "src/parse_dataset.py"}
 train = {cmd = "src/train.py"}
-eval_pretrained = {cmd = "src/eval_pretrained.py"}
+eval = {cmd = "src/eval_pretrained.py"}
 finetune = {cmd = "src/finetune_clone_detection.py"}

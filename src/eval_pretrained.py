@@ -1,44 +1,18 @@
 import wandb
 
 import os
-import yaml
 import argparse
-import logging
-import random
 import torch
-import numpy as np
 from pathlib import Path
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoConfig, AutoModelForMaskedLM
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from tqdm import tqdm
 
-from tree_enhanced_codeberta import TreeEnhancedCodeBERTa
+from tree_enhanced_codeberta_mlm import TreeEnhancedRobertaForMaskedLM
+from utils import set_seed, setup_logger, load_config, initialize_wandb
 
-logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
-
-def set_seed(seed: int):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-def load_config(config_path: Path) -> dict:
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
-
-def initialize_wandb(config, name, files_to_save):
-    wandb.init(project=config['experiment']['wandb_project'] + '-eval-pretrained', config=config, name=name)
-    for file in files_to_save:
-        wandb.save(file)
-
-def mask_inputs(input_ids, tokenizer, mlm_probability=0.15):
+def mask_inputs(input_ids, tokenizer, mlm_probability):
     labels = input_ids.clone()
     probability_matrix = torch.full(labels.shape, mlm_probability, device=labels.device)
     special_tokens_mask = [
@@ -52,7 +26,8 @@ def mask_inputs(input_ids, tokenizer, mlm_probability=0.15):
     input_ids[masked_indices] = tokenizer.mask_token_id
     return input_ids, labels
 
-def evaluate_model_mlm_dynamic_labels(model, dataset, tokenizer, batch_size, device, config, mlm_probability=0.15):
+def evaluate_model_mlm(model, dataset, tokenizer, batch_size, device, config):
+    mlm_probability = config['data']['mlm_probability']
     model.eval()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
     total_loss, total_samples = 0.0, 0
@@ -85,6 +60,8 @@ def evaluate_model_mlm_dynamic_labels(model, dataset, tokenizer, batch_size, dev
     return {'loss': avg_loss, 'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1': f1}
 
 def main():
+    logger = setup_logger()
+
     parser = argparse.ArgumentParser(description='Training script for TreeStarEncoder')
     parser.add_argument('--config', type=str, required=True, help='Path to the configuration file')
     args = parser.parse_args()
@@ -116,7 +93,7 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
     model_config = AutoConfig.from_pretrained("huggingface/CodeBERTa-small-v1", cache_dir='./cache/')
     if config['model']['extra_embeddings']:
-        model = TreeEnhancedCodeBERTa.from_pretrained(output_dir / 'final-model', config=model_config, yaml_config=config)
+        model = TreeEnhancedRobertaForMaskedLM.from_pretrained(output_dir / 'final-model', config=model_config, yaml_config=config)
     else:
         model = AutoModelForMaskedLM.from_pretrained(output_dir / 'final-model')
     logger.info(f'Loaded model: {model.__class__.__name__}')
@@ -125,7 +102,7 @@ def main():
     model.to(device)
 
     logger.info('Evaluating on test set')
-    output = evaluate_model_mlm_dynamic_labels(model, dataset, tokenizer, config['training']['batch_size'], device, config)
+    output = evaluate_model_mlm(model, dataset, tokenizer, config['training']['batch_size'], device, config)
     logger.info(f"Test loss: {output['loss']}")
     logger.info(f"Test accuracy: {output['accuracy']}")
     logger.info(f"Test precision: {output['precision']}")
