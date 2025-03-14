@@ -1,7 +1,5 @@
 # Tree-Enhanced CodeBERTa
 
-[![ACL Submission](https://img.shields.io/badge/ACL-Submission-blue)](https://anonymous.4open.science/r/tree-enhanced-codebert-BC1B/)
-
 This repository contains the implementation of **Tree-Enhanced CodeBERTa**, an improved Transformer-based model for source code representation that integrates **hierarchical positional embeddings** derived from **Abstract Syntax Trees (ASTs)**. This work is part of an anonymous ACL submission.
 
 ---
