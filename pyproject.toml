@@ -48,3 +48,16 @@ parse_data = {cmd = "src/parse_dataset.py"}
 train = {cmd = "src/train.py"}
 eval = {cmd = "src/eval_pretrained.py"}
 finetune = {cmd = "src/finetune_clone_detection.py"}
+test = {cmd = "pytest"}
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# src/ modules import each other by bare name (e.g. `from utils import ...`),
+# so they must be importable directly; conftest.py also adds this at runtime.
+pythonpath = ["src"]
+addopts = "-ra"
